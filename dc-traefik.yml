@@ -1,0 +1,39 @@
+
+version: "3"
+services:
+  traefik:
+    image: "traefik:latest"
+    restart: always
+    container_name: proxy
+    command:
+      - --entrypoints.web.address=:80
+      - --entrypoints.web-secure.address=:443 #Declares the web-secure entrypoint in Traefik
+#      - --accesslog=true #Log 
+      - --providers.docker=true
+      - --providers.file.filename=/configuration/dynamic.yaml
+      - --providers.file.directory=/configuration/
+      - --providers.file.watch=true
+#      - --api.insecure=true # <== Enabling insecure api, NOT RECOMMENDED FOR PRODUCTION
+      - --api.dashboard=true # <== Enabling the dashboard to view services, middlewares, routers, etc...
+#      - --api.debug=true
+#      - --serversTransport.insecureSkipVerify=true
+      - --entrypoints.web.http.redirections.entryPoint.to=web-secure # Redirect to Https
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https # Redirect to Https
+    ports:
+      - "80:80"
+      - "8099:8080"
+      - "443:443" #Docker sends requests on port 443 to Traefik on port 443
+    volumes:
+#Volumen para el acceso a Docker
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+#Volumen para almacenar configuraciones y certificados
+      - "/home/Docker/Traefik/configuration/:/configuration/"
+#volumenes para establecer las zonas horarias
+      - "/etc/timezone:/etc/timezone:ro"
+      - "/etc/localtime:/localtime:ro"
+  
+  my-app:
+    image: containous/whoami:v1.3.0
+    labels:
+      - "traefik.http.routers.my-app.rule=Host(`auth.test.com`)"
+      - "traefik.http.routers.my-app.tls=true"
