@@ -1,0 +1,20 @@
+
+http:  
+  routers:
+    #in_route-to-test
+    route-to-test:
+      rule: "Host(`test.test.co`)"
+      service: service-to-test
+      tls: {}
+      priority: 1000
+      entryPoints:
+        - web-secure
+    #end_route-to-test
+
+  services:
+    #in_service-to-test
+    service-to-test:
+      loadBalancer:
+        servers:
+          - url: "http://192:168.2.2:8001"
+    #end_service-to-test
